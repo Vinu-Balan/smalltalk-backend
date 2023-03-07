@@ -15,7 +15,7 @@ var users = require("./model/users.js");
 var messages = require("./model/messages.js");
 
 const app = express();
-const  PORT = 3306;
+const  PORT = 'https://smalltalk-backend.onrender.com';
 
 app.use(cors({origin: true, credentials: true}));
 app.use(express.json())
