@@ -21,7 +21,7 @@ var users = require("./model/users.js");
 var messages = require("./model/messages.js");
 
 var app = express();
-var PORT = 'https://smalltalk-backend.onrender.com';
+var PORT = 3306;
 app.use(cors({
   origin: true,
   credentials: true
@@ -30,7 +30,7 @@ app.use(express.json()); // Route to get all posts
 
 app.get("/getOnlineUsers", function (req, res) {
   users.find().then(function (data) {
-    console.log(data);
+    // console.log(data.data);
     res.send({
       data: data
     });
