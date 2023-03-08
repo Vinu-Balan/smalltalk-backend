@@ -17,7 +17,7 @@ var messages = require("./model/messages.js");
 const app = express();
 const  PORT = 3306;
 
-// app.use(cors({origin: true, credentials: true}));
+app.use(cors({origin: true, credentials: true}));
 app.use(function(req, res, next) {
     res.header("Access-Control-Allow-Origin", "*");
     res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
@@ -40,7 +40,7 @@ app.post("/chat", (req,res)=>{
         status: "available"
     });
     Users.save().then(() =>{
-        res.send("updated");
+        res.send("created: "+req.body.userid);
         console.log(req.body.userid);
     }).catch((err)=>{
         console.log(err);
@@ -53,12 +53,14 @@ app.post("/connectStranger", (req,res)=>{
         if(!data){
             res.send(null);
         }else{
+            console
             res.send(data);
             users.updateOne({userid: data.userid},
                 {$set: {status: "busy"}})
                 .then(()=>{
                     console.log("user busy");
                 });
+                console.log("connected");
         }
     }).catch((e) =>{
         console.log(e);
