@@ -116,6 +116,19 @@ app.post("/deletecurUser", (req,res)=>{
     })
 });
 
+app.post("/cleanup", (req,res)=>{
+    users.deleteOne({userid: {$eq: req.body.userid}}).
+    then(() => {
+    }).catch((e) =>{
+        console.log(e);
+    });
+    messages.deleteMany({sender: {$eq: req.body.userid}}).
+    then(() => {
+        console.log('cleaned up');
+    }).catch((e) =>{
+        console.log(e);
+    })
+});
 app.post("/sendMessage", (req,res)=>{
     var timenow = new Date()
     let Messages = new messages({
