@@ -13,6 +13,9 @@ mongoose.connect('mongodb+srv://vinubalan:8838010007dhanda@smalltalk.9khi7h3.mon
     });
 var users = require("./model/users.js");
 var messages = require("./model/messages.js");
+var admins = require('./model/admins.js');
+var comusers = require('./model/comuser.js');
+var comMessages = require('./model/comMessages.js');
 
 const app = express();
 const  PORT = 3306;
@@ -34,6 +37,15 @@ app.get("/getOnlineUsers", (req,res)=>{
         console.log(e);
     })
 });
+
+app.get("/getComUsers", (req,res)=>{
+    admins.find().then((data)=>{
+        // console.log(data.data);
+        res.send({data:data});
+    }).catch((e)=>{
+        console.log(e);
+    })
+});
 app.post("/chat", (req,res)=>{
     let Users = new users({
         userid: req.body.userid,
@@ -47,6 +59,78 @@ app.post("/chat", (req,res)=>{
     });
 });
     
+app.post('/createCom',(req,res)=>{
+    let Admin = new admins({
+        comm: req.body.comName,
+        adminid: req.body.adminID,
+        adminpass: req.body.adminPass
+    });
+    Admin.save().then(() =>{
+        console.log('community built');
+        console.log(req.body.adminID);
+    }).catch((err)=>{
+        console.log(err);
+    });
+})
+
+app.post('/joinAdmin',(req,res)=>{
+    admins.find({$and: [{adminid: {$eq: req.body.user}},{adminpass: req.body.adminPass},{comm: req.body.comName}]}).
+    then((data)=>{
+        console.log(data)
+        if(data.length!=0)
+        res.send({exist: true});
+        else
+        res.send({exist: false});
+    })
+})
+
+app.post('/joinStranger',(req,res)=>{
+    admins.find({comm: {$eq: req.body.comName}}).
+    then((data)=>{
+        if(data.length>0)
+        res.send({exist: true});
+        else
+        res.send({exist: false});
+    })
+})
+
+app.post('/createStrangerID',(req,res)=>{
+    comusers.find({userid: {$eq: req.body.userId}}).
+    then((data) =>{
+        if(data.length==0){
+            let comUser = new comusers({
+                userid: req.body.userId,
+                comm: req.body.comName,
+                status: 'busy'
+            });
+            comUser.save().then(()=>{
+                console.log('stranger id created');
+            }).catch((e)=>console.log(e));
+        }else{
+            console.log('user already exists');
+        }
+    })
+    
+})
+
+app.post('/createAdminID',(req,res)=>{
+    comusers.find({userid: {$eq: req.body.userId}}).
+    then((data) =>{
+        if(data.length==0){
+            let comUser = new comusers({
+                userid: req.body.userId,
+                comm: req.body.comName,
+                status: 'busy'
+            });
+            comUser.save().then(()=>{
+                console.log('admin id created');
+            }).catch((e)=>console.log(e));
+        }else{
+            console.log('user already exists');
+        }
+    })
+})
+
 app.post("/connectStranger", (req,res)=>{
     users.findOne({$and: [{$sample: {$size: 1}},{userid: {$ne: req.body.userid}},{status: "available"}]}).
     then((data) => {
@@ -67,6 +151,8 @@ app.post("/connectStranger", (req,res)=>{
     })
     
 });
+
+
 
 app.post("/connectNext", (req,res)=>{
     users.updateOne({userid: req.body.userid},
@@ -123,6 +209,27 @@ app.post("/deletecurUser", (req,res)=>{
     })
 });
 
+app.post("/deleteCom", (req,res)=>{
+    admins.deleteOne({comm: {$eq: req.body.community}}).
+    then(() => {
+        console.log('admin deleted');
+    }).catch((e) =>{
+        console.log(e);
+    });
+    comMessages.deleteMany({comm: {$eq: req.body.community}}).
+    then(() => {
+        console.log('community messages deleted');
+    }).catch((e) =>{
+        console.log(e);
+    })
+    comusers.deleteMany({comm: {$eq: req.body.community}}).
+    then(() => {
+        console.log('community users messages deleted');
+    }).catch((e) =>{
+        console.log(e);
+    })
+});
+
 app.post("/cleanup", (req,res)=>{
     users.deleteOne({userid: {$eq: req.body.userid}}).
     then(() => {
@@ -156,6 +263,28 @@ app.post("/sendMessage", (req,res)=>{
     })
 });
 
+app.post("/sendComMessage", (req,res)=>{
+    var timenow = new Date()
+    let ComMessage = new comMessages({
+        sender: req.body.sender,
+        comm: req.body.community,
+        message: req.body.message,
+        time: timenow.getHours()+":"+timenow.getMinutes()
+    });
+    console.log(req.body);
+    ComMessage.save().
+    then((data) => {
+        if(!data){
+            res.send(null);
+        }else{
+            console.log('comMessage saved')
+            res.send(data);
+        }
+    }).catch((e) =>{
+        console.log(e);
+    })
+});
+
 app.post("/getMessage", (req,res)=>{
     messages.find({$or: [{sender:{$eq:req.body.sender}},{sender:{$eq:req.body.reciever}}]}).
     then((data)=>{
@@ -167,6 +296,17 @@ app.post("/getMessage", (req,res)=>{
 app.get("/chat", (req,res)=>{
 });
 
-app.listen(PORT, ()=>{
+app.post("/getComMessage", (req,res)=>{
+    comMessages.find({comm:{$eq:req.body.community}}).
+    then((data)=>{
+        res.header( "Access-Control-Allow-Origin" );
+        res.send(data);
+    }).catch((e)=>{console.log(e)})
+});
+
+app.get("/chat", (req,res)=>{
+});
+
+app.listen(PORT,()=>{
     console.log(`Server is running on ${PORT}`)
 })
